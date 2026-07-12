@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Botswana Agricultural Intelligence Platform</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',sans-serif;
+}
+
+body{
+    background:#f4f7f5;
+    min-height:100vh;
+    padding:20px;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+}
+
+.header{
+    background:linear-gradient(135deg,#0f8f3d,#03451d);
+    color:white;
+    padding:30px;
+    border-radius:20px;
+    margin-bottom:20px;
+    box-shadow:0 10px 30px rgba(0,0,0,.15);
+}
+
+.header h1{
+    font-size:38px;
+    margin-bottom:10px;
+}
+
+.header p{
+    opacity:.9;
+}
+
+.card{
+    background:white;
+    padding:25px;
+    border-radius:20px;
+    box-shadow:0 8px 25px rgba(0,0,0,.08);
+}
+
+.upload-box{
+    border:2px dashed #0f8f3d;
+    border-radius:15px;
+    padding:30px;
+    text-align:center;
+    transition:.3s;
+}
+
+.upload-box:hover{
+    background:#f8fffa;
+}
+
+input[type=file]{
+    width:100%;
+    margin-top:15px;
+}
+
+.preview{
+    display:none;
+    margin-top:20px;
+}
+
+.preview img{
+    width:100%;
+    max-height:450px;
+    object-fit:cover;
+    border-radius:15px;
+}
+
+.predict-btn{
+    width:100%;
+    border:none;
+    background:#0f8f3d;
+    color:white;
+    padding:16px;
+    border-radius:12px;
+    font-size:18px;
+    margin-top:20px;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.predict-btn:hover{
+    background:#09682d;
+}
+
+.loading{
+    display:none;
+    text-align:center;
+    margin-top:15px;
+    font-weight:bold;
+    color:#0f8f3d;
+}
+
+.result-card{
+    display:none;
+    margin-top:25px;
+    background:#f6fff7;
+    border:1px solid #bde5c8;
+    border-radius:15px;
+    padding:25px;
+}
+
+.result-title{
+    font-size:30px;
+    color:#0f8f3d;
+    font-weight:700;
+}
+
+.confidence{
+    font-size:20px;
+    margin-top:10px;
+}
+
+.progress{
+    margin-top:15px;
+    height:12px;
+    background:#ddd;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+.progress-bar{
+    height:100%;
+    width:0%;
+    background:#0f8f3d;
+    transition:.5s;
+}
+
+.ai-section{
+    margin-top:25px;
+    padding-top:20px;
+    border-top:1px solid #d5ead8;
+}
+
+.ai-title{
+    color:#0f8f3d;
+    margin-bottom:12px;
+    font-size:24px;
+}
+
+#aiReportContent{
+    line-height:1.8;
+    color:#222;
+}
+
+#aiReportContent h2,
+#aiReportContent h3{
+    color:#0f8f3d;
+    margin-top:16px;
+    margin-bottom:8px;
+}
+
+#aiReportContent ul{
+    margin-left:20px;
+    margin-bottom:10px;
+}
+
+.save-btn{
+    width:100%;
+    border:none;
+    background:#1f6feb;
+    color:white;
+    padding:16px;
+    border-radius:12px;
+    font-size:18px;
+    margin-top:20px;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.save-btn:hover{
+    background:#1759c2;
+}
+
+.footer{
+    text-align:center;
+    margin-top:20px;
+    color:#666;
+}
+
+@media(max-width:768px){
+    .header h1{
+        font-size:28px;
+    }
+
+    .result-title{
+        font-size:22px;
+    }
+
+    .ai-title{
+        font-size:20px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+    <h1>🐄 Livestock Disease Detection</h1>
+    <p>Upload an image and identify livestock diseases using AI</p>
+</div>
+
+    <div class="card">
+
+        <div class="upload-box">
+            <h3>📷 Upload Livestock Image</h3>
+
+            <input
+                type="file"
+                id="imageInput"
+                accept="image/*">
+        </div>
+
+        <div class="preview" id="preview">
+            <img id="previewImage" alt="Preview">
+        </div>
+
+       <button
+    class="predict-btn"
+    id="predictBtn"
+    onclick="predictImage()"
+    disabled>
+    Loading Model...
+</button>
+        <div class="loading" id="loading">
+            Analyzing Image...
+        </div>
+
+        <div class="result-card" id="resultCard">
+
+            <div class="result-title" id="prediction">
+                Prediction
+            </div>
+
+            <div class="confidence" id="confidence">
+                Confidence
+            </div>
+
+            <div class="progress">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+
+            <div class="ai-section">
+                <div class="ai-title">🤖 AI Agricultural Advisory</div>
+                <div id="aiReportContent">
+                    <p>Your advisory report will appear here.</p>
+                </div>
+            </div>
+
+            <button class="save-btn" onclick="saveCaseReport()">
+                💾 Save Case Report
+            </button>
+
+        </div>
+
+    </div>
+
+    <div class="footer">
+        Designed & Developed by Bokang Loeto Jobe
+    </div>
+
+</div>
+
+<script>
+
+let model;
+let labels;
+let modelLoaded = false;
+let currentPrediction = "";
+let currentConfidence = "";
+let currentReport = "";
+let currentImage = "";
+
+async function loadModel(){
+
+    try{
+
+        model = await tf.loadLayersModel(
+            "/models/livestock/model.json"
+        );
+
+        const metadata =
+            await fetch(
+                "/models/livestock/metadata.json"
+            ).then(res => res.json());
+
+        labels = metadata.labels;
+
+        modelLoaded = true;
+
+        document.getElementById("predictBtn").disabled = false;
+        document.getElementById("predictBtn").innerHTML =
+            "Predict Cattle";
+
+        console.log("Livestock Model Loaded");
+
+    }catch(error){
+
+        console.error(
+            "Model Load Error:",
+            error
+        );
+
+        alert(
+            "Failed to load livestock model."
+        );
+    }
+}
+
+loadModel();
+document
+.getElementById("imageInput")
+.addEventListener("change", function(e){
+
+    const file = e.target.files[0];
+
+    if(!file) return;
+
+    const imageUrl = URL.createObjectURL(file);
+
+    document.getElementById("previewImage").src = imageUrl;
+    document.getElementById("preview").style.display = "block";
+});
+
+function toBase64(file){
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+}
+
+
+async function predictImage(){
+
+    if(!modelLoaded){
+
+    alert(
+        "Livestock model is still loading. Please wait a few seconds and try again."
+    );
+
+    return;
+}
+
+    const file = document.getElementById("imageInput").files[0];
+
+    if(!file){
+        alert("Please select an image.");
+        return;
+    }
+
+    document.getElementById("loading").style.display = "block";
+    document.getElementById("resultCard").style.display = "none";
+
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    await img.decode();
+
+    let tensor = tf.browser
+        .fromPixels(img)
+        .resizeBilinear([224,224])
+        .toFloat();
+
+    tensor = tensor.div(127.5).sub(1);
+    tensor = tensor.expandDims();
+
+    const prediction = model.predict(tensor);
+    const scores = await prediction.data();
+
+    let bestIndex = 0;
+
+    for(let i = 1; i < scores.length; i++){
+        if(scores[i] > scores[bestIndex]){
+            bestIndex = i;
+        }
+    }
+
+    const label = labels[bestIndex];
+
+    const confidence = parseFloat(
+        (scores[bestIndex] * 100).toFixed(2)
+    );
+
+    currentPrediction = label;
+    currentConfidence = confidence;
+    currentImage = await toBase64(file);
+    currentReport = "";
+
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("resultCard").style.display = "block";
+    document.getElementById("prediction").innerHTML = label;
+    document.getElementById("confidence").innerHTML = confidence + "% Confidence";
+    document.getElementById("progressBar").style.width = confidence + "%";
+
+    console.log({
+        prediction: label,
+        confidence: confidence
+    });
+
+    await generateAIReport(label, confidence);
+}
+
+async function generateAIReport(label, confidence){
+
+    const reportContent =
+        document.getElementById("aiReportContent");
+
+    reportContent.innerHTML =
+        "<p>Generating AI advisory report...</p>";
+
+    try{
+
+        const response = await fetch(
+            "/api/generate-report",
+            {
+                method:"POST",
+                headers:{
+                    "Content-Type":"application/json"
+                },
+                body:JSON.stringify({
+                    disease:label,
+                    confidence:confidence,
+                    country:"Botswana",
+                    district:"Gaborone",
+                    cropOrAnimal:"Livestock"
+                })
+            }
+        );
+
+        const data =
+            await response.json();
+
+        console.log(
+            "API RESPONSE:",
+            data
+        );
+
+        if(
+            data.success &&
+            data.report
+        ){
+
+            reportContent.innerHTML =
+                data.report;
+
+            currentReport =
+                data.report;
+
+        }else{
+
+            reportContent.innerHTML = `
+                <h3>API Error</h3>
+                <pre>${JSON.stringify(data,null,2)}</pre>
+            `;
+
+            currentReport = `
+                <pre>${JSON.stringify(data,null,2)}</pre>
+            `;
+        }
+
+    }catch(error){
+
+        console.error(error);
+
+        reportContent.innerHTML = `
+            <h3>Frontend Error</h3>
+            <pre>${error.message}</pre>
+        `;
+
+        currentReport = `
+            <pre>${error.message}</pre>
+        `;
+    }
+}
+
+function saveCaseReport(){
+
+    if(!currentPrediction){
+        alert("Please run a prediction first.");
+        return;
+    }
+
+    const today = new Date().toLocaleString();
+
+    const html = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>${currentPrediction} Case Report</title>
+<style>
+    body{
+        font-family: Arial, sans-serif;
+        padding: 30px;
+        color: #222;
+        line-height: 1.7;
+        background: #fff;
+    }
+    h1,h2,h3{
+        color: #0f8f3d;
+    }
+    .meta{
+        margin-bottom: 20px;
+        padding: 15px;
+        border: 1px solid #d9e8dc;
+        border-radius: 12px;
+        background: #f8fffa;
+    }
+    img{
+        max-width: 100%;
+        border-radius: 12px;
+        margin: 15px 0;
+    }
+    .report{
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #d9e8dc;
+    }
+</style>
+</head>
+<body>
+
+<h1>Botswana Agricultural Intelligence Platform</h1>
+<h2>Case Report</h2>
+
+<div class="meta">
+    <p><strong>Date:</strong> ${today}</p>
+    <p><strong>Prediction:</strong> ${currentPrediction}</p>
+    <p><strong>Confidence:</strong> ${currentConfidence}%</p>
+</div>
+
+<img src="${currentImage}" alt="Uploaded livestock image">
+<div class="report">
+    ${currentReport}
+</div>
+
+</body>
+</html>`;
+
+   const reportWindow = window.open("", "_blank");
+
+reportWindow.document.open();
+reportWindow.document.write(html);
+reportWindow.document.close();
+
+setTimeout(() => {
+    reportWindow.print();
+}, 1000);
+}
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Botswana Agricultural Intelligence Platform</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Segoe UI',sans-serif;
+}
+
+body{
+    background:#f4f7f5;
+    min-height:100vh;
+    padding:20px;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+}
+
+.header{
+    background:linear-gradient(135deg,#0f8f3d,#03451d);
+    color:white;
+    padding:30px;
+    border-radius:20px;
+    margin-bottom:20px;
+    box-shadow:0 10px 30px rgba(0,0,0,.15);
+}
+
+.header h1{
+    font-size:38px;
+    margin-bottom:10px;
+}
+
+.header p{
+    opacity:.9;
+}
+
+.card{
+    background:white;
+    padding:25px;
+    border-radius:20px;
+    box-shadow:0 8px 25px rgba(0,0,0,.08);
+}
+
+.upload-box{
+    border:2px dashed #0f8f3d;
+    border-radius:15px;
+    padding:30px;
+    text-align:center;
+    transition:.3s;
+}
+
+.upload-box:hover{
+    background:#f8fffa;
+}
+
+input[type=file]{
+    width:100%;
+    margin-top:15px;
+}
+
+.preview{
+    display:none;
+    margin-top:20px;
+}
+
+.preview img{
+    width:100%;
+    max-height:450px;
+    object-fit:cover;
+    border-radius:15px;
+}
+
+.predict-btn{
+    width:100%;
+    border:none;
+    background:#0f8f3d;
+    color:white;
+    padding:16px;
+    border-radius:12px;
+    font-size:18px;
+    margin-top:20px;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.predict-btn:hover{
+    background:#09682d;
+}
+
+.loading{
+    display:none;
+    text-align:center;
+    margin-top:15px;
+    font-weight:bold;
+    color:#0f8f3d;
+}
+
+.result-card{
+    display:none;
+    margin-top:25px;
+    background:#f6fff7;
+    border:1px solid #bde5c8;
+    border-radius:15px;
+    padding:25px;
+}
+
+.result-title{
+    font-size:30px;
+    color:#0f8f3d;
+    font-weight:700;
+}
+
+.confidence{
+    font-size:20px;
+    margin-top:10px;
+}
+
+.progress{
+    margin-top:15px;
+    height:12px;
+    background:#ddd;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+.progress-bar{
+    height:100%;
+    width:0%;
+    background:#0f8f3d;
+    transition:.5s;
+}
+
+.footer{
+    text-align:center;
+    margin-top:20px;
+    color:#666;
+}
+
+@media(max-width:768px){
+
+    .header h1{
+        font-size:28px;
+    }
+
+    .result-title{
+        font-size:22px;
+    }
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <div class="header">
+        <h1>🌱 Pest Detection</h1>
+        <p>Upload an image and identify agricultural pests using AI</p>
+    </div>
+
+    <div class="card">
+
+        <div class="upload-box">
+            <h3>📷 Upload Pest Image</h3>
+
+            <input
+                type="file"
+                id="imageInput"
+                accept="image/*">
+        </div>
+
+        <div
+            class="preview"
+            id="preview">
+
+            <img id="previewImage">
+
+        </div>
+
+        <button
+            class="predict-btn"
+            onclick="predictImage()">
+
+            Predict Pest
+
+        </button>
+
+        <div
+            class="loading"
+            id="loading">
+
+            Analyzing Image...
+
+        </div>
+
+        <div
+            class="result-card"
+            id="resultCard">
+
+            <div
+                class="result-title"
+                id="prediction">
+
+                Prediction
+
+            </div>
+
+            <div
+                class="confidence"
+                id="confidence">
+
+                Confidence
+
+            </div>
+
+            <div class="progress">
+                <div
+                    class="progress-bar"
+                    id="progressBar">
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="footer">
+        Botswana Agricultural Intelligence Platform
+    </div>
+
+</div>
+
+<script>
+
+let model;
+let labels;
+
+async function loadModel(){
+
+    model = await tf.loadLayersModel(
+        "./model.json"
+    );
+
+    const metadata =
+        await fetch("./metadata.json")
+        .then(res => res.json());
+
+    labels = metadata.labels;
+
+    console.log("Model Loaded");
+
+}
+
+loadModel();
+
+document
+.getElementById("imageInput")
+.addEventListener("change", function(e){
+
+    const file = e.target.files[0];
+
+    if(!file) return;
+
+    const imageUrl =
+        URL.createObjectURL(file);
+
+    document
+        .getElementById("previewImage")
+        .src = imageUrl;
+
+    document
+        .getElementById("preview")
+        .style.display = "block";
+
+});
+
+async function predictImage(){
+
+    const file =
+        document
+        .getElementById("imageInput")
+        .files[0];
+
+    if(!file){
+
+        alert(
+            "Please select an image."
+        );
+
+        return;
+    }
+
+    document
+        .getElementById("loading")
+        .style.display = "block";
+
+    const img = new Image();
+
+    img.src =
+        URL.createObjectURL(file);
+
+    await img.decode();
+
+    let tensor =
+        tf.browser
+        .fromPixels(img)
+        .resizeBilinear([224,224])
+        .toFloat();
+
+    tensor =
+        tensor.div(127.5).sub(1);
+
+    tensor =
+        tensor.expandDims();
+
+    const prediction =
+        model.predict(tensor);
+
+    const scores =
+        await prediction.data();
+
+    let bestIndex = 0;
+
+    for(let i=1;i<scores.length;i++){
+
+        if(
+            scores[i] >
+            scores[bestIndex]
+        ){
+            bestIndex = i;
+        }
+    }
+
+    const label =
+        labels[bestIndex];
+
+    const confidence =
+        parseFloat(
+            (
+                scores[bestIndex] * 100
+            ).toFixed(2)
+        );
+
+    document
+        .getElementById("loading")
+        .style.display = "none";
+
+    document
+        .getElementById("resultCard")
+        .style.display = "block";
+
+    document
+        .getElementById("prediction")
+        .innerHTML = label;
+
+    document
+        .getElementById("confidence")
+        .innerHTML =
+            confidence +
+            "% Confidence";
+
+    document
+        .getElementById("progressBar")
+        .style.width =
+            confidence + "%";
+
+    console.log({
+        prediction: label,
+        confidence: confidence
+    });
+
+}
+
+</script>
+
+</body>
+</html>

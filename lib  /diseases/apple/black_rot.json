@@ -1,0 +1,22 @@
+{
+  "references": [
+    {
+      "title": "Black Rot of Apple",
+      "source": "University of Minnesota Extension",
+      "url": "https://extension.umn.edu/plant-diseases/black-rot-apple"
+    },
+    {
+      "title": "Apple Disease: Black Rot",
+      "source": "Penn State Extension",
+      "url": "https://extension.psu.edu/apple-disease-black-rot"
+    }
+  ],
+  "images": [
+    {
+      "title": "Black Rot on Apple Fruit",
+      "imageUrl": "https://extension.umn.edu/sites/extension.umn.edu/files/black-rot-apple-fruit.jpg",
+      "source": "University of Minnesota Extension",
+      "sourceUrl": "https://extension.umn.edu/plant-diseases/black-rot-apple"
+    }
+  ]
+}
