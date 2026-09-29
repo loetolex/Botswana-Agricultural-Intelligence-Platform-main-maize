@@ -23,7 +23,7 @@ async function loadModel() {
     "models",
     "crops",
     "maize",
-    "Leaf_spot",
+    "Leaf Spot",
     "model.json"
   );
 
@@ -38,7 +38,7 @@ async function loadModel() {
     "models",
     "crops",
     "maize",
-    "Leaf_spot",
+    "Leaf Spot",
     "metadata.json"
   );
 
